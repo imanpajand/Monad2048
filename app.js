@@ -101,7 +101,7 @@ async function connectWallet() {
             try {
                 // Request to switch
                 await tempProvider.send('wallet_switchEthereumChain', [{ chainId: MONAD_NETWORK_CONFIG.chainId }]);
-                 console.log("✅ Switched to Monad network.");
+                console.log("✅ Switched to Monad network.");
             } catch (switchError) {
                 // Error chain has not been added to the wallet.
                 if (switchError.code === 4902) {
@@ -128,7 +128,7 @@ async function connectWallet() {
         provider = new ethers.BrowserProvider(eth);
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
-        contract = new ethers.Contract(0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575, ABI, signer);
+        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
         const address = await signer.getAddress();
         document.getElementById("connectWalletBtn").innerText = `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -145,7 +145,6 @@ async function connectWallet() {
 
 async function sendGM() {
     if (!contract || !signer) return alert("لطفاً ابتدا کیف پول خود را متصل کنید.");
-    if (CONTRACT_ADDRESS === "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575") return alert("آدرس قرارداد هوشمند برای شبکه موناد تنظیم نشده است.");
 
     try {
         const tx = await contract.gm("Gm from ImanPJN", 0, { gasLimit: 100000 });
@@ -162,7 +161,6 @@ async function sendGM() {
 async function submitScore(e) {
     e.preventDefault();
     if (!contract || !signer) return alert("لطفاً ابتدا کیف پول خود را متصل کنید.");
-    if (CONTRACT_ADDRESS === "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575") return alert("آدرس قرارداد هوشمند برای شبکه موناد تنظیم نشده است.");
 
     const name = document.getElementById("playerName").value.trim();
     if (!name) return alert("لطفاً یک نام وارد کنید.");
@@ -194,13 +192,8 @@ async function loadLeaderboard() {
     const lbDiv = document.getElementById("leaderboard");
     lbDiv.innerHTML = "<h3>🏆 Leaderboard</h3>";
     
-    if (CONTRACT_ADDRESS === "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575") {
-        lbDiv.innerHTML += "<p>⚠️ آدرس قرارداد هوشمند برای شبکه موناد تنظیم نشده است.</p>";
-        return;
-    }
-
     try {
-        const readContract = new ethers.Contract(0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575, ABI, readProvider);
+        const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, readProvider);
         const logs = await readContract.queryFilter("GM");
 
         const leaderboard = {};
@@ -247,151 +240,151 @@ function toggleLeaderboard() {
 // ----------------- GAME LOGIC ------------------
 
 function updateScoreDisplay() {
-  const scoreEl = document.getElementById("score-display");
-  if (scoreEl) {
-    scoreEl.innerText = `Score: ${currentScore}`;
-  }
+  const scoreEl = document.getElementById("score-display");
+  if (scoreEl) {
+    scoreEl.innerText = `Score: ${currentScore}`;
+  }
 }
 
 let grid = [];
 
 function initGame() {
-  grid = Array.from({ length: 4 }, () => Array(4).fill(0));
-  tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
-  addRandomTile();
-  addRandomTile();
-  currentScore = 0;
-  gameOver = false;
-  updateGameBoard();
-  updateScoreDisplay();
+  grid = Array.from({ length: 4 }, () => Array(4).fill(0));
+  tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
+  addRandomTile();
+  addRandomTile();
+  currentScore = 0;
+  gameOver = false;
+  updateGameBoard();
+  updateScoreDisplay();
 }
 
 function resetGame() {
-  initGame();
+  initGame();
 }
 
 function setupControls() {
-  window.onkeydown = (e) => {
-    if (gameOver) return;
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-      e.preventDefault();
-      move(e.key);
-    }
-  };
-  const gameBoard = document.getElementById("game");
-  let startX, startY;
-  const touchOptions = { passive: false };
-  gameBoard.addEventListener("touchstart", (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, touchOptions);
-  gameBoard.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-  }, touchOptions);
-  gameBoard.addEventListener("touchend", (e) => {
-    if (gameOver) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      move(dx > 0 ? "ArrowRight" : "ArrowLeft");
-    } else {
-      move(dy > 0 ? "ArrowDown" : "ArrowUp");
-    }
-  });
+  window.onkeydown = (e) => {
+    if (gameOver) return;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      e.preventDefault();
+      move(e.key);
+    }
+  };
+  const gameBoard = document.getElementById("game");
+  let startX, startY;
+  const touchOptions = { passive: false };
+  gameBoard.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, touchOptions);
+  gameBoard.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+  }, touchOptions);
+  gameBoard.addEventListener("touchend", (e) => {
+    if (gameOver) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      move(dx > 0 ? "ArrowRight" : "ArrowLeft");
+    } else {
+      move(dy > 0 ? "ArrowDown" : "ArrowUp");
+    }
+  });
 }
 
 function addRandomTile() {
-  const empty = [];
-  grid.forEach((row, r) =>
-    row.forEach((val, c) => {
-      if (val === 0) empty.push([r, c]);
-    })
-  );
-  if (empty.length === 0) return;
-  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
-  grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+  const empty = [];
+  grid.forEach((row, r) =>
+    row.forEach((val, c) => {
+      if (val === 0) empty.push([r, c]);
+    })
+  );
+  if (empty.length === 0) return;
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  grid[r][c] = Math.random() < 0.9 ? 2 : 4;
 }
 
 function updateGameBoard() {
-  const gameDiv = document.getElementById("game");
-  gameDiv.innerHTML = "";
-  grid.forEach((row, r) =>
-    row.forEach((val, c) => {
-      const tile = document.createElement("div");
-      const isNew = val > 0 && !tileExistsPreviously[r][c];
-      tile.className = `tile tile-${val}${isNew ? ' new' : ''}`;
-      tile.setAttribute("data-value", val > 0 ? val : "");
-      gameDiv.appendChild(tile);
-    })
-  );
+  const gameDiv = document.getElementById("game");
+  gameDiv.innerHTML = "";
+  grid.forEach((row, r) =>
+    row.forEach((val, c) => {
+      const tile = document.createElement("div");
+      const isNew = val > 0 && !tileExistsPreviously[r][c];
+      tile.className = `tile tile-${val}${isNew ? ' new' : ''}`;
+      tile.setAttribute("data-value", val > 0 ? val : "");
+      gameDiv.appendChild(tile);
+    })
+  );
 }
 
 function move(direction) {
-  const clone = JSON.parse(JSON.stringify(grid));
-  const merged = Array.from({ length: 4 }, () => Array(4).fill(false));
-  const combine = (row, rIndex) => {
-    let arr = row.filter(Boolean);
-    for (let i = 0; i < arr.length - 1; i++) {
-      if (arr[i] === arr[i + 1]) {
-        arr[i] *= 2;
-        currentScore += arr[i];
-        arr[i + 1] = 0;
-        merged[rIndex][i] = true;
-      }
-    }
-    return arr.filter(Boolean).concat(Array(4 - arr.filter(Boolean).length).fill(0));
-  };
-  for (let i = 0; i < 4; i++) {
-    let row;
-    switch (direction) {
-      case "ArrowLeft":
-        grid[i] = combine(grid[i], i);
-        break;
-      case "ArrowRight":
-        row = grid[i].slice().reverse();
-        grid[i] = combine(row, i).reverse();
-        break;
-      case "ArrowUp":
-        row = grid.map(r => r[i]);
-        const colUp = combine(row, i);
-        grid.forEach((r, j) => (r[i] = colUp[j]));
-        break;
-      case "ArrowDown":
-        row = grid.map(r => r[i]).reverse();
-        const colDown = combine(row, i).reverse();
-        grid.forEach((r, j) => (r[i] = colDown[j]));
-        break;
-    }
-  }
-  if (JSON.stringify(grid) !== JSON.stringify(clone)) {
-    tileExistsPreviously = clone.map(row => row.map(cell => cell > 0));
-    addRandomTile();
-    updateGameBoard();
-    const tiles = document.querySelectorAll('.tile');
-    let index = 0;
-    grid.forEach((row, r) =>
-      row.forEach((val, c) => {
-        if (val !== 0 && merged[r][c]) {
-          tiles[index].classList.add('merge');
-        }
-        index++;
-      })
-    );
-    updateScoreDisplay();
-    if (!canMove()) {
-      gameOver = true;
-      alert("💀 متاسفانه Game Over شدی! اما میتونی امتیازتو ثبت کنی.");
-    }
-  }
+  const clone = JSON.parse(JSON.stringify(grid));
+  const merged = Array.from({ length: 4 }, () => Array(4).fill(false));
+  const combine = (row, rIndex) => {
+    let arr = row.filter(Boolean);
+    for (let i = 0; i < arr.length - 1; i++) {
+      if (arr[i] === arr[i + 1]) {
+        arr[i] *= 2;
+        currentScore += arr[i];
+        arr[i + 1] = 0;
+        merged[rIndex][i] = true;
+      }
+    }
+    return arr.filter(Boolean).concat(Array(4 - arr.filter(Boolean).length).fill(0));
+  };
+  for (let i = 0; i < 4; i++) {
+    let row;
+    switch (direction) {
+      case "ArrowLeft":
+        grid[i] = combine(grid[i], i);
+        break;
+      case "ArrowRight":
+        row = grid[i].slice().reverse();
+        grid[i] = combine(row, i).reverse();
+        break;
+      case "ArrowUp":
+        row = grid.map(r => r[i]);
+        const colUp = combine(row, i);
+        grid.forEach((r, j) => (r[i] = colUp[j]));
+        break;
+      case "ArrowDown":
+        row = grid.map(r => r[i]).reverse();
+        const colDown = combine(row, i).reverse();
+        grid.forEach((r, j) => (r[i] = colDown[j]));
+        break;
+    }
+  }
+  if (JSON.stringify(grid) !== JSON.stringify(clone)) {
+    tileExistsPreviously = clone.map(row => row.map(cell => cell > 0));
+    addRandomTile();
+    updateGameBoard();
+    const tiles = document.querySelectorAll('.tile');
+    let index = 0;
+    grid.forEach((row, r) =>
+      row.forEach((val, c) => {
+        if (val !== 0 && merged[r][c]) {
+          tiles[index].classList.add('merge');
+        }
+        index++;
+      })
+    );
+    updateScoreDisplay();
+    if (!canMove()) {
+      gameOver = true;
+      alert("💀 متاسفانه Game Over شدی! اما میتونی امتیازتو ثبت کنی.");
+    }
+  }
 }
 
 function canMove() {
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      if (grid[r][c] === 0) return true;
-      if (c < 3 && grid[r][c] === grid[r][c + 1]) return true;
-      if (r < 3 && grid[r][c] === grid[r + 1][c]) return true;
-    }
-  }
-  return false;
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      if (grid[r][c] === 0) return true;
+      if (c < 3 && grid[r][c] === grid[r][c + 1]) return true;
+      if (r < 3 && grid[r][c] === grid[r + 1][c]) return true;
+    }
+  }
+  return false;
 }
