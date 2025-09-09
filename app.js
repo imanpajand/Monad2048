@@ -1,4 +1,4 @@
-// --- Monad Conf ---
+// --- Monad ---
 const MONAD_CHAIN_ID = '8008135';
 const MONAD_NETWORK_CONFIG = {
     chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`, // '0x7A4F37'
