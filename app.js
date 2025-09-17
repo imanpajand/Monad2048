@@ -31,8 +31,12 @@ window.onload = async () => {
         console.error("❌ Farcaster SDK ready error:", err);
     }
 
-    // Pre-load leaderboard
-    loadLeaderboard();
+    // Pre-load leaderboard (read-only)
+    try {
+        loadLeaderboard();
+    } catch (err) {
+        console.warn("⚠️ Leaderboard load skipped:", err.message);
+    }
 };
 
 
@@ -46,7 +50,7 @@ async function connectWallet() {
         if (!eth && window.sdk?.wallet?.getEthereumProvider) {
             try {
                 eth = await window.sdk.wallet.getEthereumProvider();
-                console.log("📱 Farcaster MiniApp Wallet Detected");
+                if (eth) console.log("📱 Farcaster MiniApp Wallet Detected");
             } catch (err) {
                 console.warn("⚠️ Farcaster provider error:", err);
             }
@@ -64,11 +68,9 @@ async function connectWallet() {
             console.log("🦊 Standard injected wallet detected.");
         }
 
-        // --- fallback read-only ---
+        // --- No wallet found ---
         if (!eth) {
-            provider = new ethers.JsonRpcProvider(FALLBACK_RPC);
-            loadLeaderboard();
-            alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
+            alert("❌ کیف پولی پیدا نشد. لطفاً Farcaster یا MetaMask/Rabby نصب کنید.");
             return;
         }
 
@@ -79,9 +81,11 @@ async function connectWallet() {
         // --- Auto Switch به Monad ---
         if (network.chainId.toString() !== MONAD_CHAIN_ID) {
             try {
-                await provider.send('wallet_switchEthereumChain', [{ chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }]);
+                await provider.send('wallet_switchEthereumChain', [
+                    { chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }
+                ]);
                 console.log("✅ Switched to Monad Testnet");
-                // ری‌اینیشیالایز بعد از سوییچ
+                // re-init provider بعد از سوییچ
                 provider = new ethers.BrowserProvider(eth);
             } catch (switchError) {
                 console.error("❌ Failed to switch network:", switchError);
@@ -90,15 +94,17 @@ async function connectWallet() {
             }
         }
 
-        // --- دسترسی حساب ---
+        // --- Request Accounts ---
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
         const address = await signer.getAddress();
-        document.getElementById("connectWalletBtn").innerText = `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
+        document.getElementById("connectWalletBtn").innerText =
+            `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
         console.log(`✅ Wallet connected: ${address} on Monad`);
 
+        // Reload leaderboard after wallet connect
         loadLeaderboard();
 
     } catch (err) {
@@ -106,6 +112,7 @@ async function connectWallet() {
         alert("❌ اتصال کیف پول با خطا مواجه شد.");
     }
 }
+
 
 
 
@@ -148,8 +155,8 @@ async function submitScore(e) {
 
 async function loadLeaderboard() {
   try {
-    // استفاده از provider متصل به کیف پول یا fallback به RPC اختصاصی Monad
-    const providerToUse = provider || new ethers.JsonRpcProvider(FALLBACK_RPC);
+    // استفاده از provider متصل به کیف پول یا RPC عمومی Monad
+    const providerToUse = provider || new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
     const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
 
     const latestBlock = await providerToUse.getBlockNumber();
