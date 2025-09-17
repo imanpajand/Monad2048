@@ -65,7 +65,7 @@ async function connectWallet() {
 
         // --- fallback read-only ---
         if (!eth) {
-            provider = new ethers.JsonRpcProvider("https://testnet.monad.xyz/");
+            provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
             loadLeaderboard();
             alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
             return;
@@ -143,7 +143,7 @@ async function submitScore(e) {
 async function loadLeaderboard() {
     try {
         // استفاده از provider متصل به کیف پول یا fallback به RPC مستقیم Monad
-        const providerToUse = provider || new ethers.JsonRpcProvider("https://testnet.monad.xyz/");
+        const providerToUse = provider || new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
         const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
 
         const latestBlock = await providerToUse.getBlockNumber();
