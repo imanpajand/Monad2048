@@ -1,17 +1,15 @@
-const MONAD_CHAIN_ID = '8008135'; 
-
 // کانفیگ شبکه Monad
+const MONAD_CHAIN_ID = '8008135';
 const MONAD_NETWORK_CONFIG = {
     chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`,
     chainName: 'Monad Testnet',
     nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-    rpcUrls: ['/api/monad'],
+    rpcUrls: ['https://testnet.monad.xyz/'], // این خط رو به حالت اولیه برگردونید
     blockExplorerUrls: ['https://explorer.testnet.monad.xyz/'],
 };
 
-
 // --- Fallback RPC در صورت CORS یا مشکل شبکه ---
-const FALLBACK_RPC = 'https://monad-testnet.drpc.org/';
+const FALLBACK_RPC = '/api/monad'; // این خط رو به پروکسی Vercel تغییر بدید
 
 // --- Contract Config ---
 const CONTRACT_ADDRESS = "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575"; 
