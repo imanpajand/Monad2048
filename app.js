@@ -9,7 +9,7 @@ const MONAD_NETWORK_CONFIG = {
 };
 
 // --- Fallback RPC در صورت CORS یا مشکل شبکه ---
-const FALLBACK_RPC = '/api/monad'; // این خط رو به پروکسی Vercel تغییر بدید
+const FALLBACK_RPC = window.location.origin + '/api/monad';
 
 // --- Contract Config ---
 const CONTRACT_ADDRESS = "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575"; 
