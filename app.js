@@ -1,4 +1,3 @@
-// --- Chain / Contract Config ---
 const MONAD_CHAIN_ID = '10143'; // فقط chainId موناد
 
 const CONTRACT_ADDRESS = "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575"; 
@@ -31,12 +30,8 @@ window.onload = async () => {
         console.error("❌ Farcaster SDK ready error:", err);
     }
 
-    // Pre-load leaderboard (read-only)
-    try {
-        loadLeaderboard();
-    } catch (err) {
-        console.warn("⚠️ Leaderboard load skipped:", err.message);
-    }
+    // Pre-load leaderboard
+    loadLeaderboard();
 };
 
 
@@ -47,12 +42,12 @@ async function connectWallet() {
         let eth = null;
 
         // --- Farcaster MiniApp Wallet ---
-        if (!eth && window.sdk?.wallet?.getEthereumProvider) {
+        if (window.sdk?.wallet?.getEthereumProvider) {
             try {
                 eth = await window.sdk.wallet.getEthereumProvider();
-                if (eth) console.log("📱 Farcaster MiniApp Wallet Detected");
+                console.log("📱 Farcaster MiniApp Wallet Detected");
             } catch (err) {
-                console.warn("⚠️ Farcaster provider error:", err);
+                console.warn("⚠️ Farcaster provider error, fallback to injected:", err);
             }
         }
 
@@ -68,33 +63,26 @@ async function connectWallet() {
             console.log("🦊 Standard injected wallet detected.");
         }
 
-        // --- No wallet found ---
+        // --- fallback read-only ---
         if (!eth) {
-            alert("❌ کیف پولی پیدا نشد. لطفاً Farcaster یا MetaMask/Rabby نصب کنید.");
+            provider = new ethers.JsonRpcProvider("https://testnet.monad.xyz/");
+            loadLeaderboard();
+            alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
             return;
         }
 
         // --- ایجاد provider ---
         provider = new ethers.BrowserProvider(eth);
-        let network = await provider.getNetwork();
 
         // --- Auto Switch به Monad ---
-        if (network.chainId.toString() !== MONAD_CHAIN_ID) {
-            try {
-                await provider.send('wallet_switchEthereumChain', [
-                    { chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }
-                ]);
-                console.log("✅ Switched to Monad Testnet");
-                // re-init provider بعد از سوییچ
-                provider = new ethers.BrowserProvider(eth);
-            } catch (switchError) {
-                console.error("❌ Failed to switch network:", switchError);
-                alert("لطفاً شبکه رو دستی روی Monad Testnet بذارید.");
-                return;
-            }
+        try {
+            await provider.send('wallet_switchEthereumChain', [{ chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }]);
+            console.log("✅ Switched to Monad Testnet");
+        } catch (switchError) {
+            console.warn("⚠️ Wallet switch failed (maybe already on network):", switchError);
         }
 
-        // --- Request Accounts ---
+        // --- دسترسی حساب ---
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
@@ -102,9 +90,8 @@ async function connectWallet() {
         const address = await signer.getAddress();
         document.getElementById("connectWalletBtn").innerText =
             `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
-        console.log(`✅ Wallet connected: ${address} on Monad`);
+        console.log(`✅ Wallet connected: ${address}`);
 
-        // Reload leaderboard after wallet connect
         loadLeaderboard();
 
     } catch (err) {
@@ -154,24 +141,24 @@ async function submitScore(e) {
 }
 
 async function loadLeaderboard() {
-  try {
-    // استفاده از provider متصل به کیف پول یا RPC عمومی Monad
-    const providerToUse = provider || new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
-    const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
+    try {
+        // استفاده از provider متصل به کیف پول یا fallback به RPC مستقیم Monad
+        const providerToUse = provider || new ethers.JsonRpcProvider("https://testnet.monad.xyz/");
+        const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
 
-    const latestBlock = await providerToUse.getBlockNumber();
-    const step = 100; // محدودیت RPC Monad → فقط ۱۰۰ بلاک در هر query
-    let logs = [];
+        const latestBlock = await providerToUse.getBlockNumber();
+        const step = 100; // محدودیت RPC Monad → فقط ۱۰۰ بلاک در هر query
+        let logs = [];
 
-    for (let from = 0; from <= latestBlock; from += step) {
-      const to = Math.min(from + step, latestBlock);
-      try {
-        const chunk = await readContract.queryFilter("GM", from, to);
-        logs = logs.concat(chunk);
-      } catch (err) {
-        console.error(`❌ Error fetching logs from block ${from} to ${to}:`, err);
-      }
-    }
+        for (let from = 0; from <= latestBlock; from += step) {
+            const to = Math.min(from + step, latestBlock);
+            try {
+                const chunk = await readContract.queryFilter("GM", from, to);
+                logs = logs.concat(chunk);
+            } catch (err) {
+                console.error(`❌ Error fetching logs from block ${from} to ${to}:`, err);
+            }
+        }
 
     const leaderboard = {};
     logs.forEach(log => {
