@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/monad/:match*",
+      "destination": "https://testnet.monad.xyz/:match*"
+    }
+  ]
+}
