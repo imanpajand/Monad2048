@@ -1,7 +1,7 @@
 // کانفیگ شبکه Monad    
 const MONAD_CHAIN_ID = '8008135';
 const MONAD_NETWORK_CONFIG = {
-    chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`, // '0x7A4F37'
+    chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`,
     chainName: 'Monad Testnet',
     nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
     rpcUrls: ['https://testnet.monad.xyz/'], // primary RPC
@@ -49,35 +49,9 @@ window.onload = async () => {
 async function connectWallet() {
     try {
         console.log("🔍 Searching for wallet provider...");
-
         let eth = null;
 
-        // --- Farcaster SDK Initialization ---
-        try {
-            if (window.sdk?.actions?.ready) {
-                await window.sdk.actions.ready();
-                console.log("✅ sdk.actions.ready() called");
-
-                if (window.sdk?.actions?.addMiniApp) {
-                    try {
-                        await window.sdk.actions.addMiniApp();
-                        console.log("ℹ️ Mini App add prompt triggered (Farcaster only)");
-                    } catch (err) {
-                        if (err?.name === "RejectedByUser") {
-                            console.log("ℹ️ User declined to add Mini App");
-                        } else if (err?.name === "InvalidDomainManifestJson") {
-                            console.warn("⚠️ Mini App not added: domain or manifest issue");
-                        } else {
-                            console.error("❌ Unexpected Mini App error:", err);
-                        }
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("❌ sdk ready error:", err);
-        }
-
-        // 1️⃣ Farcaster MiniApp Wallet
+        // --- Farcaster MiniApp Wallet ---
         if (!eth && window.sdk?.wallet?.getEthereumProvider) {
             try {
                 eth = await window.sdk.wallet.getEthereumProvider();
@@ -87,19 +61,19 @@ async function connectWallet() {
             }
         }
 
-        // 2️⃣ Injected Wallets (MetaMask, Rabby, Phantom)
+        // --- Injected Wallets ---
         if (!eth && window.ethereum?.providers?.length) {
             eth = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby || p.isPhantom);
             if (eth) console.log("🌐 Injected provider found:", eth.isMetaMask ? "MetaMask" : eth.isRabby ? "Rabby" : "Phantom");
         }
 
-        // 3️⃣ Standard Injected Wallet
+        // --- Standard Injected Wallet ---
         if (!eth && window.ethereum) {
             eth = window.ethereum;
             console.log("🦊 Standard injected wallet detected.");
         }
 
-        // اگر اصلاً والت پیدا نشد، از fallback RPC فقط برای خواندن داده‌ها استفاده می‌کنیم
+        // --- fallback read-only provider ---
         if (!eth) {
             console.warn("⚠️ No wallet found, using fallback RPC for read-only operations.");
             provider = new ethers.JsonRpcProvider(FALLBACK_RPC);
@@ -147,7 +121,8 @@ async function connectWallet() {
         document.getElementById("connectWalletBtn").innerText = `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
         console.log(`✅ Wallet connected: ${address} on Monad network.`);
 
-        loadLeaderboard(); // بارگذاری لیدربورد بعد از اتصال
+        // بارگذاری لیدربورد بعد از اتصال
+        loadLeaderboard();
 
     } catch (err) {
         console.error("Connect Wallet Error:", err);
