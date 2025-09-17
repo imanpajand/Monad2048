@@ -1,16 +1,6 @@
-// Monad
-const MONAD_CHAIN_ID = '10143';
-const MONAD_NETWORK_CONFIG = {
-    chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`,
-    chainName: 'Monad Testnet',
-    nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-    rpcUrls: ['https://rpc.ankr.com/monad_testnet'],
-    blockExplorerUrls: ['https://explorer.testnet.monad.xyz/'],
-};
+// --- Chain / Contract Config ---
+const MONAD_CHAIN_ID = '10143'; // فقط chainId موناد
 
-const FALLBACK_RPC = window.location.origin + '/api/monad';
-
-// --- Contract Config ---
 const CONTRACT_ADDRESS = "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575"; 
 const ABI = [
     "function gm(string name, uint256 score) external",
@@ -41,10 +31,12 @@ window.onload = async () => {
         console.error("❌ Farcaster SDK ready error:", err);
     }
 
-    // Pre-load leaderboard (فقط برای مشاهده قبل از اتصال کیف پول)
+    // Pre-load leaderboard
     loadLeaderboard();
 };
 
+
+// --- Connect Wallet ---
 async function connectWallet() {
     try {
         console.log("🔍 Searching for wallet provider...");
@@ -60,10 +52,10 @@ async function connectWallet() {
             }
         }
 
-        // --- Injected Wallets ---
+        // --- Injected Wallets (MetaMask, Rabby) ---
         if (!eth && window.ethereum?.providers?.length) {
-            eth = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby || p.isPhantom);
-            if (eth) console.log("🌐 Injected provider found:", eth.isMetaMask ? "MetaMask" : eth.isRabby ? "Rabby" : "Phantom");
+            eth = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby);
+            if (eth) console.log("🌐 Injected provider found:", eth.isMetaMask ? "MetaMask" : "Rabby");
         }
 
         // --- Standard Injected Wallet ---
@@ -72,55 +64,41 @@ async function connectWallet() {
             console.log("🦊 Standard injected wallet detected.");
         }
 
-        // --- fallback read-only provider ---
+        // --- fallback read-only ---
         if (!eth) {
-            console.warn("⚠️ No wallet found, using fallback RPC for read-only operations.");
             provider = new ethers.JsonRpcProvider(FALLBACK_RPC);
-            loadLeaderboard(); // فقط برای مشاهده لیدربورد
-            alert("❌ هیچ کیف پولی پیدا نشد. فقط لیدربورد بارگذاری شد.");
+            loadLeaderboard();
+            alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
             return;
         }
 
-        // --- ایجاد provider اصلی ---
+        // --- ایجاد provider ---
         provider = new ethers.BrowserProvider(eth);
-        const network = await provider.getNetwork();
-        console.log("🌐 Current network:", network);
+        let network = await provider.getNetwork();
 
-        // --- سوئیچ یا اضافه کردن شبکه Monad ---
+        // --- Auto Switch به Monad ---
         if (network.chainId.toString() !== MONAD_CHAIN_ID) {
             try {
-                await provider.send('wallet_switchEthereumChain', [{ chainId: MONAD_NETWORK_CONFIG.chainId }]);
-                console.log("✅ Switched to Monad network");
+                await provider.send('wallet_switchEthereumChain', [{ chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }]);
+                console.log("✅ Switched to Monad Testnet");
+                // ری‌اینیشیالایز بعد از سوییچ
+                provider = new ethers.BrowserProvider(eth);
             } catch (switchError) {
-                if (switchError.code === 4902) {
-                    try {
-                        await provider.send('wallet_addEthereumChain', [MONAD_NETWORK_CONFIG]);
-                        console.log("✅ Monad network added successfully");
-                        await provider.send('wallet_switchEthereumChain', [{ chainId: MONAD_NETWORK_CONFIG.chainId }]);
-                        console.log("✅ Switched to Monad network after adding");
-                    } catch (addError) {
-                        console.error("❌ Failed to add Monad network:", addError);
-                        alert("امکان اضافه کردن خودکار شبکه موناد وجود ندارد. لطفاً دستی اضافه کنید.");
-                        return;
-                    }
-                } else {
-                    console.error("❌ Failed to switch network:", switchError);
-                    alert("لطفاً شبکه را به صورت دستی به Monad Testnet تغییر دهید.");
-                    return;
-                }
+                console.error("❌ Failed to switch network:", switchError);
+                alert("لطفاً شبکه رو دستی روی Monad Testnet بذارید.");
+                return;
             }
         }
 
-        // --- درخواست دسترسی حساب ---
+        // --- دسترسی حساب ---
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
         const address = await signer.getAddress();
         document.getElementById("connectWalletBtn").innerText = `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
-        console.log(`✅ Wallet connected: ${address} on Monad network.`);
+        console.log(`✅ Wallet connected: ${address} on Monad`);
 
-        // بارگذاری لیدربورد بعد از اتصال
         loadLeaderboard();
 
     } catch (err) {
@@ -128,6 +106,7 @@ async function connectWallet() {
         alert("❌ اتصال کیف پول با خطا مواجه شد.");
     }
 }
+
 
 
 
