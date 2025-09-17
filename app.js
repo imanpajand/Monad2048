@@ -1,16 +1,15 @@
-//کانفیگ شبکه گوه موناد    
+// کانفیگ شبکه Monad    
 const MONAD_CHAIN_ID = '8008135';
 const MONAD_NETWORK_CONFIG = {
     chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`, // '0x7A4F37'
     chainName: 'Monad Testnet',
-    nativeCurrency: {
-        name: 'MON',
-        symbol: 'MON',
-        decimals: 18,
-    },
-    rpcUrls: ['https://testnet.monad.xyz/'],
+    nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+    rpcUrls: ['https://testnet.monad.xyz/'], // primary RPC
     blockExplorerUrls: ['https://explorer.testnet.monad.xyz/'],
 };
+
+// --- Fallback RPC در صورت CORS یا مشکل شبکه ---
+const FALLBACK_RPC = 'https://monad-testnet.drpc.org/';
 
 // --- Contract Config ---
 const CONTRACT_ADDRESS = "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575"; 
@@ -19,18 +18,15 @@ const ABI = [
     "event GM(string name, uint256 score, address player, uint256 timestamp)"
 ];
 
-// --- Variables ---
 let provider, signer, contract;
 let currentScore = 0;
 let gameOver = false;
 let tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
 
 window.onload = async () => {
-    // Load
     initGame();
     setupControls();
 
-    // Event Listeners
     document.getElementById("scoreForm").addEventListener("submit", submitScore);
     document.getElementById("gmButton").addEventListener("click", sendGM);
     document.getElementById("leaderboardToggle").addEventListener("click", toggleLeaderboard);
@@ -46,12 +42,8 @@ window.onload = async () => {
         console.error("❌ Farcaster SDK ready error:", err);
     }
 
-    // Attempt to auto-connect wallet
-    if (window.ethereum || window.sdk?.wallet?.getEthereumProvider) {
-        // to avoid unexpected popups,
-        // pre-load the leaderboard.
-        loadLeaderboard();
-    }
+    // Pre-load leaderboard (فقط برای مشاهده قبل از اتصال کیف پول)
+    loadLeaderboard();
 };
 
 async function connectWallet() {
@@ -66,7 +58,6 @@ async function connectWallet() {
                 await window.sdk.actions.ready();
                 console.log("✅ sdk.actions.ready() called");
 
-                // --- Add Mini App Prompt (Farcaster only) ---
                 if (window.sdk?.actions?.addMiniApp) {
                     try {
                         await window.sdk.actions.addMiniApp();
@@ -108,12 +99,16 @@ async function connectWallet() {
             console.log("🦊 Standard injected wallet detected.");
         }
 
+        // اگر اصلاً والت پیدا نشد، از fallback RPC فقط برای خواندن داده‌ها استفاده می‌کنیم
         if (!eth) {
-            alert("❌ هیچ کیف پولی پیدا نشد. لطفاً MetaMask، Rabby یا Farcaster نصب کنید.");
-            throw new Error("No wallet provider found.");
+            console.warn("⚠️ No wallet found, using fallback RPC for read-only operations.");
+            provider = new ethers.JsonRpcProvider(FALLBACK_RPC);
+            loadLeaderboard(); // فقط برای مشاهده لیدربورد
+            alert("❌ هیچ کیف پولی پیدا نشد. فقط لیدربورد بارگذاری شد.");
+            return;
         }
 
-        // --- ایجاد provider ---
+        // --- ایجاد provider اصلی ---
         provider = new ethers.BrowserProvider(eth);
         const network = await provider.getNetwork();
         console.log("🌐 Current network:", network);
@@ -152,14 +147,14 @@ async function connectWallet() {
         document.getElementById("connectWalletBtn").innerText = `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
         console.log(`✅ Wallet connected: ${address} on Monad network.`);
 
-        // بارگذاری لیدربورد بعد از اتصال
-        loadLeaderboard();
+        loadLeaderboard(); // بارگذاری لیدربورد بعد از اتصال
 
     } catch (err) {
         console.error("Connect Wallet Error:", err);
         alert("❌ اتصال کیف پول با خطا مواجه شد.");
     }
 }
+
 
 
 async function sendGM() {
