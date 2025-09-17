@@ -4,7 +4,7 @@ const MONAD_NETWORK_CONFIG = {
     chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`,
     chainName: 'Monad Testnet',
     nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-    rpcUrls: ['https://testnet-rpc.monad.xyz'],
+    rpcUrls: ['https://rpc.ankr.com/monad_testnet'],
     blockExplorerUrls: ['https://explorer.testnet.monad.xyz/'],
 };
 
