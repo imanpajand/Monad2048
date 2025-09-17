@@ -168,46 +168,43 @@ async function submitScore(e) {
 }
 
 async function loadLeaderboard() {
-    let readProvider;
-    // Use the connected wallet's provider
-    if (provider) {
-        readProvider = provider;
-    } else {
-        readProvider = new ethers.JsonRpcProvider(MONAD_NETWORK_CONFIG.rpcUrls[0]);
-        console.log("Using read-only RPC for leaderboard.");
+  try {
+    // استفاده از provider متصل به کیف پول یا fallback به RPC اختصاصی Monad
+    const providerToUse = provider || new ethers.JsonRpcProvider(FALLBACK_RPC);
+    const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
+
+    const latestBlock = await providerToUse.getBlockNumber();
+    const step = 100; // محدودیت RPC Monad → فقط ۱۰۰ بلاک در هر query
+    let logs = [];
+
+    for (let from = 0; from <= latestBlock; from += step) {
+      const to = Math.min(from + step, latestBlock);
+      try {
+        const chunk = await readContract.queryFilter("GM", from, to);
+        logs = logs.concat(chunk);
+      } catch (err) {
+        console.error(`❌ Error fetching logs from block ${from} to ${to}:`, err);
+      }
     }
 
-    const lbDiv = document.getElementById("leaderboard");
-    lbDiv.innerHTML = "<h3>🏆 Leaderboard</h3>";
-    
-    try {
-        const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, readProvider);
-        const logs = await readContract.queryFilter("GM");
+    const leaderboard = {};
+    logs.forEach(log => {
+      const { name, score, player } = log.args;
+      if (!leaderboard[player] || leaderboard[player].score < score) {
+        leaderboard[player] = { name, score: Number(score) };
+      }
+    });
 
-        const leaderboard = {};
-        logs.forEach(log => {
-            const name = log.args.name;
-            const score = Number(log.args.score);
-            if (score > 0) { // Only show entries with actual scores
-                if (!leaderboard[name] || score > leaderboard[name]) {
-                    leaderboard[name] = score;
-                }
-            }
-        });
+    // ساختن جدول لیدربرد
+    const sorted = Object.values(leaderboard).sort((a, b) => b.score - a.score);
+    const table = document.getElementById("leaderboard");
+    table.innerHTML = sorted.map((entry, i) =>
+      `<tr><td>${i + 1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`
+    ).join("");
 
-        const sorted = Object.entries(leaderboard).sort((a, b) => b[1] - a[1]);
-        
-        if (sorted.length === 0) {
-            lbDiv.innerHTML += "<p>هنوز امتیازی ثبت نشده!</p>";
-        } else {
-            sorted.slice(0, 10).forEach(([name, score], i) => {
-                lbDiv.innerHTML += `<div>${i + 1}. <strong>${name}</strong>: ${score}</div>`;
-            });
-        }
-    } catch (error) {
-        console.error("Could not load leaderboard:", error);
-        lbDiv.innerHTML += "<p>خطا در بارگذاری لیدربورد.</p>";
-    }
+  } catch (err) {
+    console.error("❌ loadLeaderboard error:", err);
+  }
 }
 
 
