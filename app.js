@@ -1,10 +1,10 @@
 // کانفیگ شبکه Monad    
-const MONAD_CHAIN_ID = '8008135';
 const MONAD_NETWORK_CONFIG = {
     chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}`,
     chainName: 'Monad Testnet',
     nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-    rpcUrls: ['https://testnet.monad.xyz/'], // primary RPC
+    // RPC جدید که از پروکسی Vercel استفاده می‌کنه
+    rpcUrls: ['/api/monad'],
     blockExplorerUrls: ['https://explorer.testnet.monad.xyz/'],
 };
 
