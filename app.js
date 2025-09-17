@@ -56,16 +56,38 @@ window.onload = async () => {
 
 async function connectWallet() {
     try {
-        let eth = null;
-        console.log("🔍 Finding wallet provider...");
+        console.log("🔍 Searching for wallet provider...");
 
-        // 1. Farcaster Frame / Base App Environment
-        if (window.ethereum && window.ethereum.isFrame) {
-            eth = window.ethereum;
-            console.log("🟣 Base App Frame Wallet Detected");
+        let eth = null;
+
+        // --- Farcaster SDK Initialization ---
+        try {
+            if (window.sdk?.actions?.ready) {
+                await window.sdk.actions.ready();
+                console.log("✅ sdk.actions.ready() called");
+
+                // --- Add Mini App Prompt (Farcaster only) ---
+                if (window.sdk?.actions?.addMiniApp) {
+                    try {
+                        await window.sdk.actions.addMiniApp();
+                        console.log("ℹ️ Mini App add prompt triggered (Farcaster only)");
+                    } catch (err) {
+                        if (err?.name === "RejectedByUser") {
+                            console.log("ℹ️ User declined to add Mini App");
+                        } else if (err?.name === "InvalidDomainManifestJson") {
+                            console.warn("⚠️ Mini App not added: domain or manifest issue");
+                        } else {
+                            console.error("❌ Unexpected Mini App error:", err);
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("❌ sdk ready error:", err);
         }
-        // 2. Farcaster MiniApp on Mobile
-        else if (window.sdk?.wallet?.getEthereumProvider) {
+
+        // 1️⃣ Farcaster MiniApp Wallet
+        if (!eth && window.sdk?.wallet?.getEthereumProvider) {
             try {
                 eth = await window.sdk.wallet.getEthereumProvider();
                 console.log("📱 Farcaster MiniApp Wallet Detected");
@@ -73,46 +95,44 @@ async function connectWallet() {
                 console.warn("⚠️ Farcaster provider error:", err);
             }
         }
-        // 3. Injected Wallets 
-        else if (window.ethereum?.providers?.length) {
-            const injected = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby || p.isPhantom);
-            if (injected) {
-                eth = injected;
-                console.log("🌐 Injected provider (MetaMask/Rabby/Phantom) found.");
-            }
+
+        // 2️⃣ Injected Wallets (MetaMask, Rabby, Phantom)
+        if (!eth && window.ethereum?.providers?.length) {
+            eth = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby || p.isPhantom);
+            if (eth) console.log("🌐 Injected provider found:", eth.isMetaMask ? "MetaMask" : eth.isRabby ? "Rabby" : "Phantom");
         }
-        // 4. Standard Injected Wallet (MetaMask)
-        else if (window.ethereum) {
+
+        // 3️⃣ Standard Injected Wallet
+        if (!eth && window.ethereum) {
             eth = window.ethereum;
             console.log("🦊 Standard injected wallet detected.");
         }
 
         if (!eth) {
-            alert("❌ هیچ کیف پولی پیدا نشد. لطفاً یک کیف پول مانند ربی یا متامسک نصب کنید.");
+            alert("❌ هیچ کیف پولی پیدا نشد. لطفاً MetaMask، Rabby یا Farcaster نصب کنید.");
             throw new Error("No wallet provider found.");
         }
 
-        // --- MONAD NETWORK SWITCH ---
-        const tempProvider = new ethers.BrowserProvider(eth);
-        const network = await tempProvider.getNetwork();
+        // --- ایجاد provider ---
+        provider = new ethers.BrowserProvider(eth);
+        const network = await provider.getNetwork();
+        console.log("🌐 Current network:", network);
 
+        // --- سوئیچ یا اضافه کردن شبکه Monad ---
         if (network.chainId.toString() !== MONAD_CHAIN_ID) {
-            console.log(`Current network: ${network.name} (${network.chainId}). Requesting switch to Monad...`);
             try {
-                // Request to switch
-                await tempProvider.send('wallet_switchEthereumChain', [{ chainId: MONAD_NETWORK_CONFIG.chainId }]);
-                console.log("✅ Switched to Monad network.");
+                await provider.send('wallet_switchEthereumChain', [{ chainId: MONAD_NETWORK_CONFIG.chainId }]);
+                console.log("✅ Switched to Monad network");
             } catch (switchError) {
-                // Error chain has not been added to the wallet.
                 if (switchError.code === 4902) {
-                    console.log("Monad network not found in wallet. Requesting to add it...");
                     try {
-                        // Request to add the Monad Testnet
-                        await tempProvider.send('wallet_addEthereumChain', [MONAD_NETWORK_CONFIG]);
-                        console.log("✅ Monad network added.");
+                        await provider.send('wallet_addEthereumChain', [MONAD_NETWORK_CONFIG]);
+                        console.log("✅ Monad network added successfully");
+                        await provider.send('wallet_switchEthereumChain', [{ chainId: MONAD_NETWORK_CONFIG.chainId }]);
+                        console.log("✅ Switched to Monad network after adding");
                     } catch (addError) {
                         console.error("❌ Failed to add Monad network:", addError);
-                        alert("امکان اضافه کردن خودکار شبکه موناد وجود ندارد. لطفاً به صورت دستی آن را اضافه کنید.");
+                        alert("امکان اضافه کردن خودکار شبکه موناد وجود ندارد. لطفاً دستی اضافه کنید.");
                         return;
                     }
                 } else {
@@ -122,10 +142,8 @@ async function connectWallet() {
                 }
             }
         }
-        // --- END ---
-        
-        // Finalize
-        provider = new ethers.BrowserProvider(eth);
+
+        // --- درخواست دسترسی حساب ---
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
@@ -133,8 +151,8 @@ async function connectWallet() {
         const address = await signer.getAddress();
         document.getElementById("connectWalletBtn").innerText = `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
         console.log(`✅ Wallet connected: ${address} on Monad network.`);
-        
-        // Load user-specific data after connection
+
+        // بارگذاری لیدربورد بعد از اتصال
         loadLeaderboard();
 
     } catch (err) {
@@ -142,6 +160,7 @@ async function connectWallet() {
         alert("❌ اتصال کیف پول با خطا مواجه شد.");
     }
 }
+
 
 async function sendGM() {
     if (!contract || !signer) return alert("لطفاً ابتدا کیف پول خود را متصل کنید.");
