@@ -1,4 +1,4 @@
-const MONAD_CHAIN_ID = '10143'; // فقط chainId موناد
+const MONAD_CHAIN_ID = '10143';
 
 const CONTRACT_ADDRESS = "0x4Db87Ccf1b63588C157CF2adF86F33283d3A8575"; 
 const ABI = [
@@ -46,7 +46,7 @@ window.onload = async () => {
     console.error("❌ sdk ready error:", err);
   }
 
-  // 🔥 اتوماتیک وصل کردن والت
+
   await connectWallet();
 };
 
@@ -80,34 +80,34 @@ async function connectWallet() {
     if (!eth) {
       console.warn("⚠️ No wallet found — falling back to read-only provider.");
       provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
-      // loadLeaderboard(); // اگر لیدربورد رو حذف کردی، می‌تونی این خط رو کامنت کنی
-      notify("کیف پول پیدا نشد؛ حالت فقط‌خواندنی فعال شد.", { level: 'warn' });
+      // loadLeaderboard(); // 
+      notify("کیف پول پیدا نشد؛ د.", { level: 'warn' });
       return;
     }
 
-    // --- ایجاد provider و درخواست حساب (اول درخواست حساب سپس سوییچ) ---
+    // --- ایجاد provider ---
     provider = new ethers.BrowserProvider(eth);
     try {
       await provider.send("eth_requestAccounts", []);
     } catch (err) {
-      // کاربر ممکنه ریجکت کنه — لاگ کن، پاپ‌آپ نزن
+      // 
       console.error("eth_requestAccounts rejected or failed:", err);
       notify("دسترسی به کیف پول داده نشد.", { level: 'warn' });
       return;
     }
 
-    // --- Auto Switch به Monad (در صورت پشتیبانی مرورگر/کیف پول) ---
+    // --- Auto Switch به Monad ---
     try {
       await provider.send("wallet_switchEthereumChain", [
         { chainId: `0x${parseInt(MONAD_CHAIN_ID).toString(16)}` }
       ]);
       console.log("✅ Switched to Monad Testnet");
     } catch (switchError) {
-      // نوتیف خطا نمایش نمی‌دهیم؛ فقط لاگ می‌کنیم (کاربر ممکنه از قبل در شبکه باشد)
+      //
       console.warn("⚠️ Wallet switch failed (maybe already on network or unsupported):", switchError);
     }
 
-    // --- signer و کانترکت ---
+    // --- signer ---
     signer = await provider.getSigner();
     contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
@@ -116,12 +116,12 @@ async function connectWallet() {
       `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
     console.log(`✅ Wallet connected: ${address}`);
 
-    // notify success (اختیاری)
+    // notify success
     notify("کیف پول متصل شد.", { level: 'success' });
 
   } catch (err) {
     console.error("Connect Wallet Error:", err);
-    // بدون alert — فقط لاگ و (اختیاری) نمایش غیرمزاحم در status
+    // بدون alert
     notify("خطا در اتصال کیف پول (کنسول را بررسی کنید).", { level: 'error' });
   }
 }
@@ -139,7 +139,7 @@ async function sendGM() {
     console.log("tx receipt:", receipt);
     if (receipt && receipt.status === 1) {
       notify("GM با موفقیت ارسال شد.", { level: 'success' });
-      // loadLeaderboard(); // در صورت غیرفعال بودن لیدربرد کامنت کن
+      // loadLeaderboard(); //
     } else {
       console.error("Transaction failed or reverted:", receipt);
       notify("تراکنش انجام نشد (مشکل در شبکه یا قرارداد).", { level: 'error' });
@@ -171,7 +171,7 @@ async function submitScore(e) {
     if (receipt && receipt.status === 1) {
       notify("امتیاز شما با موفقیت ثبت شد.", { level: 'success' });
       document.getElementById("playerName").value = "";
-      // loadLeaderboard(); // در صورت نیاز
+      // loadLeaderboard(); //
       resetGame();
     } else {
       console.error("Transaction failed or reverted:", receipt);
