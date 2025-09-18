@@ -168,11 +168,19 @@ async function submitScore(e) {
     console.log("tx sent:", tx);
     const receipt = await tx.wait();
     console.log("tx receipt:", receipt);
+
     if (receipt && receipt.status === 1) {
       notify("امتیاز شما با موفقیت ثبت شد.", { level: 'success' });
       document.getElementById("playerName").value = "";
-      // loadLeaderboard(); //
-      resetGame();
+
+      //reset
+      setTimeout(() => {
+        resetGame();
+      }, 2500);
+
+      // leaderboard هم آپدیت بشه
+      // loadLeaderboard();
+
     } else {
       console.error("Transaction failed or reverted:", receipt);
       notify("ثبت امتیاز انجام نشد (تراکنش برگشت خورد).", { level: 'error' });
@@ -182,6 +190,7 @@ async function submitScore(e) {
     notify("خطا هنگام ثبت امتیاز (کنسول را بررسی کنید).", { level: 'error' });
   }
 }
+
 
 
 
