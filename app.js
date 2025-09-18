@@ -51,7 +51,6 @@ window.onload = async () => {
 };
 
 
-// --- Connect Wallet ---
 async function connectWallet() {
   try {
     console.log("🔍 Searching for wallet provider...");
@@ -77,30 +76,29 @@ async function connectWallet() {
       }
     }
 
-    // --- 3. Fallback: Read-only provider ---
     if (!eth) {
-      provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
-      loadLeaderboard();
-      alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
+      alert("❌ هیچ کیف پولی پیدا نشد.");
       return;
     }
 
     // --- ایجاد provider ---
     provider = new ethers.BrowserProvider(eth);
 
+    // --- دسترسی حساب (اول حساب بعد شبکه) ---
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+
     // --- Auto Switch به Monad ---
     try {
-      await provider.send('wallet_switchEthereumChain', [
-        { chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }
+      await provider.send("wallet_switchEthereumChain", [
+        { chainId: `0x${parseInt(MONAD_CHAIN_ID).toString(16)}` }
       ]);
       console.log("✅ Switched to Monad Testnet");
     } catch (switchError) {
-      console.warn("⚠️ Wallet switch failed (maybe already on network):", switchError);
+      console.warn("⚠️ Wallet switch failed:", switchError);
     }
 
-    // --- دسترسی حساب ---
-    await provider.send("eth_requestAccounts", []);
-    signer = await provider.getSigner();
+    // --- اینستنس کانترکت ---
     contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
     const address = await signer.getAddress();
@@ -108,13 +106,12 @@ async function connectWallet() {
       `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
     console.log(`✅ Wallet connected: ${address}`);
 
-    loadLeaderboard();
-
   } catch (err) {
     console.error("Connect Wallet Error:", err);
     alert("❌ اتصال کیف پول با خطا مواجه شد.");
   }
 }
+
 
 
 
