@@ -294,7 +294,29 @@ input[type="text"] {
 
 
 
+/* --- New UI elements styling --- */
 
+.score-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* فاصله بین نمایش امتیاز و دکمه رفرش */
+}
+
+.refresh-btn {
+    font-size: 1rem;
+    padding: 10px 12px;
+    height: 36px;
+    min-width: unset; /* برای اینکه دکمه کوچک‌تر شود */
+    background-image: linear-gradient(144deg, #4d44b9, #8d44b9 50%, #b944b9); /* رنگ‌بندی جدید */
+}
+
+.refresh-btn:hover {
+    transform: scale(1.05) rotate(10deg);
+}
+
+.refresh-btn:active {
+    transform: scale(0.95);
+}
 
 
 
