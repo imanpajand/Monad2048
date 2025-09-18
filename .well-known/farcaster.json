@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjE5MzkxLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4RjQ1NTQ1YTI4YjA1NDBlNUQ5MkQ3NzE4NDM3RjA3ODc3MmMwMzZENSJ9",
-    "payload": "eyJkb21haW4iOiJwdXJwbGUyMDQ4LnZlcmNlbC5hcHAifQ",
-    "signature": "MHg2ZTEwY2EwZDczNWZmZjZjOGUwZTllNmZlZDFmOTBlOTY2MjcyZDMzNzcwN2FjZTY3NGM3ZWY4ZjdhZDAyODdkNWU1MTEwZDY2ODI1ZjQ5ZDk0YTFjNzIyMmE2NWRlY2ViZTAxY2FiMzUwMGQ1ZGVmNGEwMjE0ZmNjN2ZkZGUwZDFj"
+    "header": "eyJmaWQiOjE5MzkxLCJ0eXBlIjoiYXV0aCIsImtleSI6IjB4NzViQUE3OWJCYTI4OWMwMGQ5QWIwODNGMTJmNmNEMTY3NTg4NWViMyJ9",
+    "payload": "eyJkb21haW4iOiJtb25hZHgyMDQ4LnZlcmNlbC5hcHAifQ",
+    "signature": "oKEtlSBbb8E1S9ssTrim8GvGTxmYKAB+Rw2n1BpBkmFirNay/3LcEdF2aN0cviOmXg7GiFsOXFHyBAkMLT+Xrxw="
   },
   "frame": {
     "name": "Monad X 2048",
