@@ -12,13 +12,13 @@ let gameOver = false;
 let tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
 
 window.onload = async () => {
-    initGame();
-    setupControls();
-
-    // اینجا دکمه ریست با آیدی "resetGameBtn" به تابع resetGame متصل می شود
-    document.getElementById("resetGameBtn").addEventListener("click", () => {
-        resetGame();
-    });
+    initGame();
+    setupControls();
+    
+    // این خط دکمه ریست را به تابع resetGame متصل می کند
+    document.getElementById("resetGameBtn").addEventListener("click", () => {
+        resetGame();
+    });
     
     document.getElementById("scoreForm").addEventListener("submit", submitScore);
     document.getElementById("gmButton").addEventListener("click", sendGM);
