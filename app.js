@@ -37,68 +37,69 @@ window.onload = async () => {
 
 // --- Connect Wallet ---
 async function connectWallet() {
-    try {
-        console.log("🔍 Searching for wallet provider...");
-        let eth = null;
+  try {
+    console.log("🔍 Searching for wallet provider...");
+    let eth = null;
 
-        // --- Farcaster MiniApp Wallet ---
-        if (window.sdk?.wallet?.getEthereumProvider) {
-            try {
-                eth = await window.sdk.wallet.getEthereumProvider();
-                console.log("📱 Farcaster MiniApp Wallet Detected");
-            } catch (err) {
-                console.warn("⚠️ Farcaster provider error, fallback to injected:", err);
-            }
-        }
-
-        // --- Injected Wallets (MetaMask, Rabby) ---
-        if (!eth && window.ethereum?.providers?.length) {
-            eth = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby);
-            if (eth) console.log("🌐 Injected provider found:", eth.isMetaMask ? "MetaMask" : "Rabby");
-        }
-
-        // --- Standard Injected Wallet ---
-        if (!eth && window.ethereum) {
-            eth = window.ethereum;
-            console.log("🦊 Standard injected wallet detected.");
-        }
-
-        // --- fallback read-only ---
-        if (!eth) {
-            provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
-            loadLeaderboard();
-            alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
-            return;
-        }
-
-        // --- ایجاد provider ---
-        provider = new ethers.BrowserProvider(eth);
-
-        // --- Auto Switch به Monad ---
-        try {
-            await provider.send('wallet_switchEthereumChain', [{ chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }]);
-            console.log("✅ Switched to Monad Testnet");
-        } catch (switchError) {
-            console.warn("⚠️ Wallet switch failed (maybe already on network):", switchError);
-        }
-
-        // --- دسترسی حساب ---
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-        const address = await signer.getAddress();
-        document.getElementById("connectWalletBtn").innerText =
-            `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
-        console.log(`✅ Wallet connected: ${address}`);
-
-        loadLeaderboard();
-
-    } catch (err) {
-        console.error("Connect Wallet Error:", err);
-        alert("❌ اتصال کیف پول با خطا مواجه شد.");
+    // --- 1. Injected Wallets (MetaMask, Rabby) ---
+    if (window.ethereum?.providers?.length) {
+      eth = window.ethereum.providers.find(p => p.isMetaMask || p.isRabby);
+      if (eth) console.log("🌐 Injected provider found:", eth.isMetaMask ? "MetaMask" : "Rabby");
     }
+    if (!eth && window.ethereum) {
+      eth = window.ethereum;
+      console.log("🦊 Standard injected wallet detected.");
+    }
+
+    // --- 2. Farcaster MiniApp Wallet ---
+    if (!eth && window.sdk?.wallet?.getEthereumProvider) {
+      try {
+        eth = await window.sdk.wallet.getEthereumProvider();
+        console.log("📱 Farcaster MiniApp Wallet Detected");
+      } catch (err) {
+        console.warn("⚠️ Farcaster provider error:", err);
+      }
+    }
+
+    // --- 3. Fallback: Read-only provider ---
+    if (!eth) {
+      provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
+      loadLeaderboard();
+      alert("❌ کیف پولی پیدا نشد. فقط لیدربورد نمایش داده شد.");
+      return;
+    }
+
+    // --- ایجاد provider ---
+    provider = new ethers.BrowserProvider(eth);
+
+    // --- Auto Switch به Monad ---
+    try {
+      await provider.send('wallet_switchEthereumChain', [
+        { chainId: `0x${Number(MONAD_CHAIN_ID).toString(16)}` }
+      ]);
+      console.log("✅ Switched to Monad Testnet");
+    } catch (switchError) {
+      console.warn("⚠️ Wallet switch failed (maybe already on network):", switchError);
+    }
+
+    // --- دسترسی حساب ---
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    const address = await signer.getAddress();
+    document.getElementById("connectWalletBtn").innerText =
+      `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
+    console.log(`✅ Wallet connected: ${address}`);
+
+    loadLeaderboard();
+
+  } catch (err) {
+    console.error("Connect Wallet Error:", err);
+    alert("❌ اتصال کیف پول با خطا مواجه شد.");
+  }
 }
+
 
 
 
