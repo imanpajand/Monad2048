@@ -20,15 +20,31 @@ window.onload = async () => {
     document.getElementById("leaderboardToggle").addEventListener("click", toggleLeaderboard);
     document.getElementById("connectWalletBtn").addEventListener("click", connectWallet);
 
-    // Farcaster SDK Initialization
-    try {
-        if (window.sdk?.actions?.ready) {
-            await window.sdk.actions.ready();
-            console.log("✅ Farcaster SDK is ready.");
+    // Farcaster SDK
+  try {
+    if (window.sdk?.actions?.ready) {
+      await window.sdk.actions.ready();
+      console.log("✅ sdk.actions.ready() called");
+
+      // --- Add Mini App Prompt for Farcaster only ---
+      if (window.sdk?.actions?.addMiniApp) {
+        try {
+          await window.sdk.actions.addMiniApp();
+          console.log("ℹ️ Mini App add prompt triggered (Farcaster only)");
+        } catch (err) {
+          if (err?.name === "RejectedByUser") {
+            console.log("ℹ️ User declined to add Mini App");
+          } else if (err?.name === "InvalidDomainManifestJson") {
+            console.warn("⚠️ Mini App not added: domain or manifest issue");
+          } else {
+            console.error("❌ Unexpected Mini App error:", err);
+          }
         }
-    } catch (err) {
-        console.error("❌ Farcaster SDK ready error:", err);
+      }
     }
+  } catch (err) {
+    console.error("❌ sdk ready error:", err);
+  }
 
     // Pre-load leaderboard
     loadLeaderboard();
