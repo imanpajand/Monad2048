@@ -5,7 +5,7 @@
     "signature": "oKEtlSBbb8E1S9ssTrim8GvGTxmYKAB+Rw2n1BpBkmFirNay/3LcEdF2aN0cviOmXg7GiFsOXFHyBAkMLT+Xrxw="
   },
   "frame": {
-    "name": "Monad X 2048",
+    "name": "2048 X Monad",
     "version": "1",
     "iconUrl": "https://monadx2048.vercel.app/assets/favicon.jpg",
     "homeUrl": "https://monadx2048.vercel.app/",
