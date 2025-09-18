@@ -175,10 +175,9 @@ async function submitScore(e) {
 
       // --- بعد از 2.5 ثانیه بازی ریست شود ---
       setTimeout(() => {
-        // مطمئن شو tileExistsPreviously هم ریست میشه
-        tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
-        resetGame();
-      }, 2500);
+  tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
+  resetGame();
+}, 2500);
 
       // leaderboard هم می‌تونه آپدیت بشه
       // loadLeaderboard();
@@ -233,6 +232,7 @@ function initGame() {
 }
 
 function resetGame() {
+  gameOver = false; // 
   initGame();
 }
 
