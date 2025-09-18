@@ -158,24 +158,38 @@ async function submitScore(e) {
 }
 
 async function loadLeaderboard() {
-    try {
-        // استفاده از provider متصل به کیف پول یا fallback به RPC مستقیم Monad
-        const providerToUse = provider || new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
-        const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
+  try {
+    // provider از کیف‌پول یا fallback
+    const providerToUse = provider || new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
+    const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
 
-        const latestBlock = await providerToUse.getBlockNumber();
-        const step = 100; // محدودیت RPC Monad → فقط ۱۰۰ بلاک در هر query
-        let logs = [];
+    // بلاک دیپلوی قرارداد (بذار همون بلاکی که قرارداد ساخته شده)
+    const deploymentBlock = 1234567; // 👉 جایگزین کن با بلاک دقیق دیپلوی
 
-        for (let from = 0; from <= latestBlock; from += step) {
-            const to = Math.min(from + step, latestBlock);
-            try {
-                const chunk = await readContract.queryFilter("GM", from, to);
-                logs = logs.concat(chunk);
-            } catch (err) {
-                console.error(`❌ Error fetching logs from block ${from} to ${to}:`, err);
-            }
-        }
+    // گرفتن لاگ‌ها از اون بلاک تا آخر
+    const logs = await readContract.queryFilter("GM", deploymentBlock, "latest");
+
+    const leaderboard = {};
+    logs.forEach(log => {
+      const { name, score, player } = log.args;
+      if (!leaderboard[player] || leaderboard[player].score < score) {
+        leaderboard[player] = { name, score: Number(score) };
+      }
+    });
+
+    // ساخت جدول لیدربرد
+    const sorted = Object.values(leaderboard).sort((a, b) => b.score - a.score);
+    const table = document.getElementById("leaderboard");
+    table.innerHTML = sorted.map((entry, i) =>
+      `<tr><td>${i + 1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`
+    ).join("");
+
+    console.log(`🏆 Leaderboard updated. Total entries: ${logs.length}`);
+  } catch (err) {
+    console.error("❌ loadLeaderboard error:", err);
+  }
+}
+
 
     const leaderboard = {};
     logs.forEach(log => {
