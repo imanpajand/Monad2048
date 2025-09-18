@@ -17,7 +17,9 @@ window.onload = async () => {
 
     document.getElementById("scoreForm").addEventListener("submit", submitScore);
     document.getElementById("gmButton").addEventListener("click", sendGM);
-    document.getElementById("leaderboardToggle").addEventListener("click", toggleLeaderboard);
+    document.getElementById("leaderboardToggle").addEventListener("click", () => {
+    resetGame();
+});
     document.getElementById("connectWalletBtn").addEventListener("click", connectWallet);
 
     // Farcaster SDK
