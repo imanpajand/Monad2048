@@ -157,59 +157,6 @@ async function submitScore(e) {
     }
 }
 
-async function loadLeaderboard() {
-  try {
-    // provider از کیف‌پول یا fallback
-    const providerToUse = provider || new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
-    const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, providerToUse);
-
-    // بلاک دیپلوی قرارداد (بذار همون بلاکی که قرارداد ساخته شده)
-    const deploymentBlock = 1234567; // 👉 جایگزین کن با بلاک دقیق دیپلوی
-
-    // گرفتن لاگ‌ها از اون بلاک تا آخر
-    const logs = await readContract.queryFilter("GM", deploymentBlock, "latest");
-
-    const leaderboard = {};
-    logs.forEach(log => {
-      const { name, score, player } = log.args;
-      if (!leaderboard[player] || leaderboard[player].score < score) {
-        leaderboard[player] = { name, score: Number(score) };
-      }
-    });
-
-    // ساخت جدول لیدربرد
-    const sorted = Object.values(leaderboard).sort((a, b) => b.score - a.score);
-    const table = document.getElementById("leaderboard");
-    table.innerHTML = sorted.map((entry, i) =>
-      `<tr><td>${i + 1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`
-    ).join("");
-
-    console.log(`🏆 Leaderboard updated. Total entries: ${logs.length}`);
-  } catch (err) {
-    console.error("❌ loadLeaderboard error:", err);
-  }
-}
-
-
-    const leaderboard = {};
-    logs.forEach(log => {
-      const { name, score, player } = log.args;
-      if (!leaderboard[player] || leaderboard[player].score < score) {
-        leaderboard[player] = { name, score: Number(score) };
-      }
-    });
-
-    // ساختن جدول لیدربرد
-    const sorted = Object.values(leaderboard).sort((a, b) => b.score - a.score);
-    const table = document.getElementById("leaderboard");
-    table.innerHTML = sorted.map((entry, i) =>
-      `<tr><td>${i + 1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`
-    ).join("");
-
-  } catch (err) {
-    console.error("❌ loadLeaderboard error:", err);
-  }
-}
 
 
 function toggleLeaderboard() {
