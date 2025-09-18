@@ -76,29 +76,39 @@ async function connectWallet() {
       }
     }
 
+    // --- 3. No wallet found: use read-only provider ---
     if (!eth) {
-      alert("❌ هیچ کیف پولی پیدا نشد.");
+      console.warn("⚠️ No wallet found — falling back to read-only provider.");
+      provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/monad_testnet");
+      // loadLeaderboard(); // اگر لیدربورد رو حذف کردی، می‌تونی این خط رو کامنت کنی
+      notify("کیف پول پیدا نشد؛ حالت فقط‌خواندنی فعال شد.", { level: 'warn' });
       return;
     }
 
-    // --- ایجاد provider ---
+    // --- ایجاد provider و درخواست حساب (اول درخواست حساب سپس سوییچ) ---
     provider = new ethers.BrowserProvider(eth);
+    try {
+      await provider.send("eth_requestAccounts", []);
+    } catch (err) {
+      // کاربر ممکنه ریجکت کنه — لاگ کن، پاپ‌آپ نزن
+      console.error("eth_requestAccounts rejected or failed:", err);
+      notify("دسترسی به کیف پول داده نشد.", { level: 'warn' });
+      return;
+    }
 
-    // --- دسترسی حساب (اول حساب بعد شبکه) ---
-    await provider.send("eth_requestAccounts", []);
-    signer = await provider.getSigner();
-
-    // --- Auto Switch به Monad ---
+    // --- Auto Switch به Monad (در صورت پشتیبانی مرورگر/کیف پول) ---
     try {
       await provider.send("wallet_switchEthereumChain", [
         { chainId: `0x${parseInt(MONAD_CHAIN_ID).toString(16)}` }
       ]);
       console.log("✅ Switched to Monad Testnet");
     } catch (switchError) {
-      console.warn("⚠️ Wallet switch failed:", switchError);
+      // نوتیف خطا نمایش نمی‌دهیم؛ فقط لاگ می‌کنیم (کاربر ممکنه از قبل در شبکه باشد)
+      console.warn("⚠️ Wallet switch failed (maybe already on network or unsupported):", switchError);
     }
 
-    // --- اینستنس کانترکت ---
+    // --- signer و کانترکت ---
+    signer = await provider.getSigner();
     contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
     const address = await signer.getAddress();
@@ -106,52 +116,71 @@ async function connectWallet() {
       `✅ ${address.slice(0, 6)}...${address.slice(-4)}`;
     console.log(`✅ Wallet connected: ${address}`);
 
+    // notify success (اختیاری)
+    notify("کیف پول متصل شد.", { level: 'success' });
+
   } catch (err) {
     console.error("Connect Wallet Error:", err);
-    alert("❌ اتصال کیف پول با خطا مواجه شد.");
+    // بدون alert — فقط لاگ و (اختیاری) نمایش غیرمزاحم در status
+    notify("خطا در اتصال کیف پول (کنسول را بررسی کنید).", { level: 'error' });
   }
 }
 
-
-
-
-
-
-
 async function sendGM() {
-    if (!contract || !signer) return alert("لطفاً ابتدا کیف پول خود را متصل کنید.");
+  if (!contract || !signer) {
+    notify("ابتدا کیف پول را متصل کنید.", { level: 'warn' });
+    return;
+  }
 
-    try {
-        const tx = await contract.gm("Gm from ImanPJN", 0, { gasLimit: 100000 });
-        const receipt = await tx.wait();
-        console.log("GM transaction successful:", receipt);
-        alert("✅ GM با موفقیت ارسال شد!");
-        loadLeaderboard();
-    } catch (err) {
-        console.error("GM Error:", err);
-        alert("❌ ارسال GM با خطا مواجه شد.");
+  try {
+    const tx = await contract.gm("Gm from ImanPJN", 0, { gasLimit: 100000 });
+    console.log("tx sent:", tx);
+    const receipt = await tx.wait();
+    console.log("tx receipt:", receipt);
+    if (receipt && receipt.status === 1) {
+      notify("GM با موفقیت ارسال شد.", { level: 'success' });
+      // loadLeaderboard(); // در صورت غیرفعال بودن لیدربرد کامنت کن
+    } else {
+      console.error("Transaction failed or reverted:", receipt);
+      notify("تراکنش انجام نشد (مشکل در شبکه یا قرارداد).", { level: 'error' });
     }
+  } catch (err) {
+    console.error("GM Error:", err);
+    notify("خطا هنگام ارسال GM (کنسول را بررسی کنید).", { level: 'error' });
+  }
 }
 
 async function submitScore(e) {
-    e.preventDefault();
-    if (!contract || !signer) return alert("لطفاً ابتدا کیف پول خود را متصل کنید.");
+  e.preventDefault();
+  if (!contract || !signer) {
+    notify("ابتدا کیف پول را متصل کنید.", { level: 'warn' });
+    return;
+  }
 
-    const name = document.getElementById("playerName").value.trim();
-    if (!name) return alert("لطفاً یک نام وارد کنید.");
+  const name = document.getElementById("playerName").value.trim();
+  if (!name) {
+    notify("لطفاً یک نام وارد کنید.", { level: 'warn' });
+    return;
+  }
 
-    try {
-        const tx = await contract.gm(name, currentScore, { gasLimit: 100000 });
-        const receipt = await tx.wait();
-        console.log("Score submission successful:", receipt);
-        alert("🎯 امتیاز شما با موفقیت در شبکه موناد ثبت شد!");
-        document.getElementById("playerName").value = "";
-        loadLeaderboard();
-        resetGame();
-    } catch (err) {
-        console.error("Submit Score Error:", err);
-        alert("❌ ثبت امتیاز با خطا مواجه شد.");
+  try {
+    const tx = await contract.gm(name, currentScore, { gasLimit: 100000 });
+    console.log("tx sent:", tx);
+    const receipt = await tx.wait();
+    console.log("tx receipt:", receipt);
+    if (receipt && receipt.status === 1) {
+      notify("امتیاز شما با موفقیت ثبت شد.", { level: 'success' });
+      document.getElementById("playerName").value = "";
+      // loadLeaderboard(); // در صورت نیاز
+      resetGame();
+    } else {
+      console.error("Transaction failed or reverted:", receipt);
+      notify("ثبت امتیاز انجام نشد (تراکنش برگشت خورد).", { level: 'error' });
     }
+  } catch (err) {
+    console.error("Submit Score Error:", err);
+    notify("خطا هنگام ثبت امتیاز (کنسول را بررسی کنید).", { level: 'error' });
+  }
 }
 
 
