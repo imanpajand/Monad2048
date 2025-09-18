@@ -46,8 +46,8 @@ window.onload = async () => {
     console.error("❌ sdk ready error:", err);
   }
 
-    // Pre-load leaderboard
-    loadLeaderboard();
+  // 🔥 اتوماتیک وصل کردن والت
+  await connectWallet();
 };
 
 
