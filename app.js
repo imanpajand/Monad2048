@@ -250,42 +250,6 @@ function resetGame() {
   updateScoreDisplay();
 }
 
-async function submitScore(e) {
-  e.preventDefault();
-  if (!contract || !signer) {
-    notify("ابتدا کیف پول را متصل کنید.", { level: 'warn' });
-    return;
-  }
-
-  const name = document.getElementById("playerName").value.trim();
-  if (!name) {
-    notify("لطفاً یک نام وارد کنید.", { level: 'warn' });
-    return;
-  }
-
-  try {
-    const tx = await contract.gm(name, currentScore, { gasLimit: 100000 });
-    console.log("tx sent:", tx);
-    const receipt = await tx.wait();
-    console.log("tx receipt:", receipt);
-
-    if (receipt && receipt.status === 1) {
-      notify("امتیاز شما با موفقیت ثبت شد.", { level: 'success' });
-      document.getElementById("playerName").value = "";
-
-      // ریست بازی بعد از 1 ثانیه
-      setTimeout(() => {
-        resetGame();
-      }, 1000);
-
-    } else {
-      console.error("Transaction failed or reverted:", receipt);
-      notify("ثبت امتیاز انجام نشد (تراکنش برگشت خورد).", { level: 'error' });
-    }
-  } catch (err) {
-    console.error("Submit Score Error:", err);
-    notify("خطا هنگام ثبت امتیاز (کنسول را بررسی کنید).", { level: 'error' });
-  }
 
 function setupControls() {
   window.onkeydown = (e) => {
