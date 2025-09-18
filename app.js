@@ -173,12 +173,14 @@ async function submitScore(e) {
       notify("امتیاز شما با موفقیت ثبت شد.", { level: 'success' });
       document.getElementById("playerName").value = "";
 
-      //reset
+      // --- بعد از 2.5 ثانیه بازی ریست شود ---
       setTimeout(() => {
+        // مطمئن شو tileExistsPreviously هم ریست میشه
+        tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
         resetGame();
       }, 2500);
 
-      // leaderboard هم آپدیت بشه
+      // leaderboard هم می‌تونه آپدیت بشه
       // loadLeaderboard();
 
     } else {
