@@ -175,12 +175,8 @@ async function submitScore(e) {
 
       // --- بعد از 2.5 ثانیه بازی ریست شود ---
       setTimeout(() => {
-  tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
-  resetGame();
-}, 2500);
-
-      // leaderboard هم می‌تونه آپدیت بشه
-      // loadLeaderboard();
+        resetGame();
+      }, 2500);
 
     } else {
       console.error("Transaction failed or reverted:", receipt);
@@ -191,8 +187,6 @@ async function submitScore(e) {
     notify("خطا هنگام ثبت امتیاز (کنسول را بررسی کنید).", { level: 'error' });
   }
 }
-
-
 
 
 function toggleLeaderboard() {
