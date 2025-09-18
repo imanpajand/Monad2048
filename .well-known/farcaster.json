@@ -31,12 +31,13 @@
     "heroImageUrl": "https://monadx2048.vercel.app/assets/favicon.jpg",
     "ogImageUrl": "https://monadx2048.vercel.app/assets/favicon.jpg",
     "ogDescription": "Play Purple 2048 game X Monad, Fun and addictive game!",
-    "castShareUrl": "https://farcaster.xyz/~/compose?text=Play+fun+and+addictive+%232048+game+on+Monad+Testnet+and+save+your+score+on-chain+on+top+the+leaderboard!+%F0%9F%94%B5+%F0%9F%8E%AE%0APurple+2048+%23MiniApp+by+%40imaan+%F0%9F%92%9C+%0Ahttps%3A%2F%2Fmonadx2048.vercel.app",
+    "castShareUrl": "https://monadx2048.vercel.app/api/share",
     "addToHomeScreenAction": {
       "type": "post_redirect",
       "name": "افزودن به Mini Apps",
       "description": "برای دسترسی سریع‌تر به این بازی",
       "postUrl": "https://monadx2048.vercel.app/"
-    }
+    },
+    "webhookUrl": "https://purple2048.vercel.app/api/farcaster-webhook"
   }
 }
