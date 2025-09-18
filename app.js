@@ -235,12 +235,15 @@ function resetGame() {
   // ریست کامل متغیرها
   gameOver = false;
   currentScore = 0;
-  tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
   grid = Array.from({ length: 4 }, () => Array(4).fill(0));
+  tileExistsPreviously = Array.from({ length: 4 }, () => Array(4).fill(false));
 
   // اضافه کردن دو کاشی اولیه
   addRandomTile();
   addRandomTile();
+
+  // حالا tileExistsPreviously رو با وضعیت grid هماهنگ می‌کنیم
+  tileExistsPreviously = grid.map(row => row.map(cell => cell > 0));
 
   // بروزرسانی UI
   updateGameBoard();
